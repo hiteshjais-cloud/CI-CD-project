@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #101418; color: #e8edf2;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  }
+  .calc { background: #1a2027; border-radius: 10px; padding: 20px; width: 320px; }
+  .screen {
+    background: #0b0f13; border-radius: 8px; padding: 18px 16px;
+    text-align: right; margin-bottom: 12px;
+  }
+  .result { font-size: 38px; word-break: break-all; }
+  .status { min-height: 18px; font-size: 13px; color: #ff7a6b; text-align: right; margin-bottom: 8px; }
+  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  button {
+    background: #232b34; color: #e8edf2; border: none; border-radius: 8px;
+    font-size: 19px; font-family: inherit; padding: 16px 0; cursor: pointer;
+  }
+  button:hover { background: #2c353f; }
+  .op { background: #2f3a45; }
+  .eq { background: #4dd4ac; color: #0b0f13; font-weight: 600; grid-row: span 2; }
+  .zero { grid-column: span 2; }
+</style>
+</head>
+<body>
+  <div class="calc">
+    <div class="screen"><div class="result" id="result">0</div></div>
+    <div class="status" id="status"></div>
+    <div class="keys">
+      <button data-action="clear">C</button>
+      <button data-action="back">&larr;</button>
+      <button class="op" data-value="/">&divide;</button>
+      <button class="op" data-value="*">&times;</button>
+      <button data-value="7">7</button>
+      <button data-value="8">8</button>
+      <button data-value="9">9</button>
+      <button class="op" data-value="-">&minus;</button>
+      <button data-value="4">4</button>
+      <button data-value="5">5</button>
+      <button data-value="6">6</button>
+      <button class="op" data-value="+">+</button>
+      <button data-value="1">1</button>
+      <button data-value="2">2</button>
+      <button data-value="3">3</button>
+      <button class="eq" data-action="equals">=</button>
+      <button class="zero" data-value="0">0</button>
+      <button data-value=".">.</button>
+    </div>
+  </div>
+
+<script>
+const API_BASE_URL = "http://localhost:5000";   // yahan apna ALB URL daalo
+
+let current = "";
+const resultEl = document.getElementById("result");
+const statusEl = document.getElementById("status");
+
+function render() { resultEl.textContent = current || "0"; }
+
+document.querySelectorAll("button").forEach(btn => {
+  btn.onclick = () => {
+    const v = btn.dataset.value, a = btn.dataset.action;
+    if (v !== undefined) { current += v; statusEl.textContent = ""; render(); }
+    else if (a === "clear") { current = ""; statusEl.textContent = ""; render(); }
+    else if (a === "back") { current = current.slice(0, -1); render(); }
+    else if (a === "equals") calculate();
+  };
+});
+
+async function calculate() {
+  if (!current) return;
+  try {
+    const res = await fetch(API_BASE_URL + "/api/calculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expression: current })
+    });
+    if (!res.ok) throw new Error("Server error " + res.status);
+    const data = await res.json();
+    current = String(data.result);
+    render();
+  } catch (err) {
+    statusEl.textContent = err.message;
+  }
+}
+</script>
+</body>
+</html>
