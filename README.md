@@ -1,3 +1,3 @@
-# Calculator App
+# Demo Calculator App
 
 ![Architecture](./architecture.svg)
